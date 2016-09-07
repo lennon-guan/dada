@@ -1,3 +1,4 @@
 *.sw?
 *.py?
+pkg
 .DS_Store
