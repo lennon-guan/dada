@@ -29,8 +29,8 @@ func (c *Ctx) Container(name string, attr Attr, children interface{}) {
 			if _, err := fmt.Fprintln(c.Writer, c.indent+"</"+name+">"); err != nil {
 				panic(err)
 			}
-		} else if txt, ok := children.(string); ok {
-			if _, err := fmt.Fprintf(c.Writer, ">%s</%s>\n", txt, name); err != nil {
+		} else {
+			if _, err := fmt.Fprintf(c.Writer, ">%v</%s>\n", children, name); err != nil {
 				panic(err)
 			}
 		}
