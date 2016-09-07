@@ -9,7 +9,7 @@ import (
 
 func renderSimple() string {
 	buf := bytes.NewBuffer(make([]byte, 0, 4096))
-	c := Ctx{Writer: buf}
+	c := NewCtx(buf)
 	c.HTML(func() {
 		c.HEAD(func() {
 			c.TITLE("test html")
@@ -17,7 +17,8 @@ func renderSimple() string {
 		})
 		c.BODY(func() {
 			c.DIV(Class("page").Class("page-default"), func() {
-				c.H1("test html")
+				c.H1("test 1 > 2 html")
+				c.H1(Safe{"test 1 > 2 html"})
 			})
 			c.UL(func() {
 				for i := 0; i < 10; i++ {
@@ -42,7 +43,7 @@ func renderPageHead(c *Ctx) {
 }
 
 func TestInclude(t *testing.T) {
-	c := &Ctx{Writer: os.Stdout}
+	c := NewCtx(os.Stdout)
 	c.BODY(func() {
 		renderPageHead(c)
 		c.H1("hehehe")
@@ -87,8 +88,7 @@ func TestMasterPage(t *testing.T) {
 		Title: "test html",
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, 4096))
-	c := Ctx{Writer: buf}
-	bp.Render(&c)
+	bp.Render(NewCtx(buf))
 	fmt.Println(buf.String())
 }
 

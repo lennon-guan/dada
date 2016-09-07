@@ -2,12 +2,34 @@ package dada
 
 import (
 	"fmt"
+	"html"
 	"io"
 )
+
+type Safe struct {
+	Val interface{}
+}
+
+type CtxCfg struct {
+	IndentStr string
+	Safe      bool
+}
 
 type Ctx struct {
 	indent string
 	Writer io.Writer
+	Config CtxCfg
+}
+
+func NewCtxWithConfig(writer io.Writer, conf *CtxCfg) *Ctx {
+	return &Ctx{
+		Writer: writer,
+		Config: *conf,
+	}
+}
+
+func NewCtx(writer io.Writer) *Ctx {
+	return NewCtxWithConfig(writer, &defaultCfg)
 }
 
 func (c *Ctx) Container(name string, attr Attr, children interface{}) {
@@ -23,10 +45,19 @@ func (c *Ctx) Container(name string, attr Attr, children interface{}) {
 				panic(err)
 			}
 			old := c.indent
-			c.indent += "  "
+			c.indent += c.Config.IndentStr
 			fn()
 			c.indent = old
 			if _, err := fmt.Fprintln(c.Writer, c.indent+"</"+name+">"); err != nil {
+				panic(err)
+			}
+		} else if s, ok := children.(Safe); ok {
+			if _, err := fmt.Fprintf(c.Writer, ">%v</%s>\n", s.Val, name); err != nil {
+				panic(err)
+			}
+		} else if !c.Config.Safe {
+			raw := fmt.Sprintf("%v", children)
+			if _, err := fmt.Fprintf(c.Writer, ">%s</%s>\n", html.EscapeString(raw), name); err != nil {
 				panic(err)
 			}
 		} else {
@@ -53,9 +84,18 @@ func (c *Ctx) Element(name string, attr Attr) {
 	}
 }
 
-func (c *Ctx) Text(content string) func() {
-	return func() {
-		if _, err := fmt.Fprintln(c.Writer, c.indent+content); err != nil {
+func (c *Ctx) Text(content interface{}) {
+	if s, ok := content.(Safe); ok {
+		if _, err := fmt.Fprint(c.Writer, s.Val); err != nil {
+			panic(err)
+		}
+	} else if !c.Config.Safe {
+		raw := fmt.Sprintf("%v", content)
+		if _, err := fmt.Fprintf(c.Writer, html.EscapeString(raw)); err != nil {
+			panic(err)
+		}
+	} else {
+		if _, err := fmt.Fprint(c.Writer, content); err != nil {
 			panic(err)
 		}
 	}
@@ -75,4 +115,11 @@ func (c *Ctx) getArgs(args []interface{}) (Attr, interface{}) {
 	} else {
 		panic("args length error")
 	}
+}
+
+var defaultCfg CtxCfg
+
+func init() {
+	defaultCfg.IndentStr = "  "
+	defaultCfg.Safe = false
 }
