@@ -52,6 +52,7 @@ tag_list = [
     ('Label',       True),
     ('Fieldset',    True),
     ('Legend',      True),
+    ('Button',      True),
 ]
 
 def element(name, file):

@@ -235,3 +235,8 @@ func (c *Ctx) LEGEND(args ...interface{}) {
     attr, fn := c.getArgs(args)
     c.Container("legend", attr, fn)
 }
+
+func (c *Ctx) BUTTON(args ...interface{}) {
+    attr, fn := c.getArgs(args)
+    c.Container("button", attr, fn)
+}
